@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self-Learning Space</title>
+<link rel="stylesheet" href="main.css?v=20261021e">
+</head>
+<body>
+<div class="layout">
+  <!-- 侧栏 -->
+  <aside class="sidebar">
+    <div class="brand" id="brand-home">Self-Learning Space</div>
+    <button id="btn-overview" class="btn btn-primary btn-block btn-home-hero">主页</button>
+    <button id="btn-new-course" class="btn btn-outline btn-block">新建课程</button>
+    <nav id="course-list" class="course-list"></nav>
+    <div class="sidebar-footer">
+      <button id="btn-import" class="btn btn-ghost btn-block">批量导入</button>
+      <button id="btn-grades" class="btn btn-ghost btn-block">均分计算</button>
+      <button id="btn-library" class="btn btn-ghost btn-block">资料总库</button>
+      <button id="btn-todos" class="btn btn-ghost btn-block">待办事项</button>
+      <button id="btn-recycle" class="btn btn-ghost btn-block">回收区</button>
+      <button id="btn-settings" class="btn btn-ghost btn-block">设置</button>
+    </div>
+  </aside>
+
+  <!-- 主区 -->
+  <main class="main">
+    <!-- 主页：批量导入 -->
+    <div id="home-view" class="course-view">
+      <header class="course-header">
+        <div><h1>主页</h1>
+          <div class="course-sub" id="dash-sub"></div></div>
+      </header>
+      <section class="panel dash">
+        <div class="dash-top">
+          <div class="dash-left">
+            <div class="dash-cards">
+              <div class="dash-card"><b id="dash-courses">-</b><span>课程</span></div>
+              <div class="dash-card"><b id="dash-materials">-</b><span>资料</span></div>
+              <div class="dash-card"><b id="dash-annot">-</b><span>已注释</span></div>
+              <div class="dash-card"><b id="dash-todos">-</b><span>待办</span></div>
+            </div>
+            <button id="dash-continue" class="dash-continue hidden"></button>
+            <div id="dash-unfiled" class="dash-alert hidden"></div>
+            <div class="dash-nav">
+              <button id="dash-lib" class="btn btn-outline btn-sm">资料总库</button>
+              <button id="dash-grades" class="btn btn-outline btn-sm">均分计算</button>
+            </div>
+          </div>
+          <div class="pomo">
+            <div class="pomo-head">番茄钟<span id="pomo-count" class="muted"></span></div>
+            <div class="pomo-ring-wrap">
+              <svg width="126" height="126" viewBox="0 0 126 126" aria-hidden="true">
+                <circle cx="63" cy="63" r="55" fill="none" stroke="var(--border)" stroke-width="7"/>
+                <circle id="pomo-arc" cx="63" cy="63" r="55" fill="none" stroke="var(--accent)" stroke-width="7"
+                        stroke-linecap="round" transform="rotate(-90 63 63)"
+                        stroke-dasharray="345.6" stroke-dashoffset="0"/>
+              </svg>
+              <div class="pomo-center">
+                <b id="pomo-time">25:00</b>
+                <span id="pomo-mode">专注</span>
+              </div>
+            </div>
+            <div class="pomo-actions">
+              <button id="pomo-start" class="btn btn-primary btn-sm">开始</button>
+              <button id="pomo-reset" class="btn btn-ghost btn-sm">重置</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 下半区：左半待办大事框 / 右半每日一句 -->
+      <div class="home-split">
+        <section class="panel home-todo">
+          <div class="panel-head">
+            <h3>待办事项 <span class="muted" id="home-todo-count"></span></h3>
+            <div class="panel-tools">
+              <button id="home-todo-sort" class="btn btn-ghost btn-sm">排序：按 DDL</button>
+              <button id="home-todo-go" class="btn btn-ghost btn-sm">全部管理</button>
+            </div>
+          </div>
+          <form id="home-todo-form" class="home-todo-form">
+            <input id="home-todo-input" class="input" placeholder="加一条待办，回车即添加" autocomplete="off">
+            <select id="home-todo-course" class="input input-sm" title="属于哪门课（可选）"></select>
+            <input id="home-todo-due" type="datetime-local" class="input input-sm">
+            <button type="submit" class="btn btn-primary btn-sm">添加</button>
+          </form>
+          <div id="home-todo-list" class="todo-list home-todo-list"></div>
+        </section>
+
+        <section class="panel home-quote">
+          <div class="home-quote-label">今日一句</div>
+          <blockquote id="home-quote-text" class="home-quote-text"></blockquote>
+          <button id="home-quote-next" class="btn btn-ghost btn-sm home-quote-btn">换一句</button>
+        </section>
+      </div>
+    </div>
+
+    <!-- 批量导入视图 -->
+    <div id="import-view" class="course-view hidden">
+      <header class="course-header">
+        <div><h1>批量导入</h1>
+          <div class="course-sub">上传包含多个课程文件的 zip 压缩包，按文件名中的课程代码（如 CPT203）自动归类建课</div></div>
+      </header>
+      <section class="panel">
+        <div id="drop-zone" class="drop-zone">
+          
+          <div><strong>把 zip 压缩包拖到这里</strong>，或</div>
+          <label class="btn btn-primary" for="zip-input">选择文件</label>
+          <input type="file" id="zip-input" accept=".zip" hidden>
+          <div class="muted" style="margin-top:8px">导入其中的 PDF 和 Word (.docx)；文件名识别不出课程代码的会进入「未分类」课程</div>
+        </div>
+        <div id="import-report" class="import-report hidden"></div>
+      </section>
+      <section class="panel">
+        <h3 style="font-size:14px;margin-bottom:8px">使用提示</h3>
+        <div class="tips muted">
+          · 单个课程内上传：进入课程 → 资料库 → 上传 PDF<br>
+          · 文件名含课程代码即可自动归类，如 <b>CPT203-Lecture1.pdf</b>、<b>BUS102_习题.pdf</b><br>
+          · 提问和出题都严格基于资料库，标注出处页码，检索不到会明说
+        </div>
+      </section>
+    </div>
+
+    <!-- 课程视图 -->
+    <div id="course-view" class="course-view hidden">
+      <header class="course-header">
+        <div>
+          <h1 id="course-title"></h1>
+          <div id="course-sub" class="course-sub"></div>
+        </div>
+        <div class="course-actions">
+          <button id="btn-edit-course" class="btn btn-ghost">编辑</button>
+          <button id="btn-clear-chat" class="btn btn-ghost">清空对话</button>
+        </div>
+      </header>
+
+      <div class="tab-bar" id="tab-bar">
+        <button class="tab" data-tab="handbook">HandBook</button>
+        <button class="tab" data-tab="materials">资料库</button>
+        <button class="tab" data-tab="study">互动学习</button>
+      </div>
+
+      <!-- HandBook -->
+      <section id="panel-handbook" class="tab-panel hidden">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>HandBook 学习指引</h3>
+            <div class="panel-tools">
+              <button id="hb-read" class="btn btn-outline btn-sm">阅读手册</button>
+              <button id="hb-rescan" class="btn btn-ghost btn-sm hidden" title="重新扫描考核构成与 DDL，不需要重新上传文件">重新扫描</button>
+              <button id="btn-hb-edit" class="btn btn-outline btn-sm">编辑</button>
+              <button id="btn-hb-save" class="btn btn-primary btn-sm hidden">保存</button>
+              <button id="btn-hb-cancel" class="btn btn-ghost btn-sm hidden">取消</button>
+              <button id="hb-upload-btn" class="btn btn-primary btn-sm">上传/重传 HandBook</button>
+              <input type="file" id="hb-file" accept=".pdf,.docx" hidden>
+            </div>
+          </div>
+          <div id="hb-note" class="grade-note muted">HandBook 是学习指引：上传后 AI 扫描考核构成作预填，帮你理清这门课要做什么、各占多少分。所有内容可手工修改。</div>
+          <table class="grade-table">
+            <thead><tr><th>考核构成</th><th>权重 %</th><th>得分</th><th>小计</th><th></th></tr></thead>
+            <tbody id="hb-tbody"></tbody>
+          </table>
+          <button id="hb-add" class="btn btn-ghost btn-sm">＋ 添加考核项</button>
+        </div>
+      </section>
+
+      <!-- 资料库 -->
+      <section id="panel-materials" class="tab-panel">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>资料列表</h3>
+            <div class="panel-tools">
+              <button id="btn-del-selected" class="btn btn-danger btn-sm hidden">删除</button>
+              <button id="btn-export" class="btn btn-outline btn-sm hidden" disabled title="在编辑模式勾选资料后点击">导出</button>
+              <button id="btn-move-selected" class="btn btn-outline btn-sm hidden">移动</button>
+              <button id="btn-edit-mode" class="btn btn-outline btn-sm">编辑</button>
+              <button id="btn-ai-organize" class="btn btn-ghost btn-sm hidden">AI 整理</button>
+              <input id="material-search" class="input input-sm" placeholder="搜索资料名…">
+              <label class="btn btn-primary btn-sm" for="file-input" id="upload-label">上传 PDF / Word</label>
+              <input type="file" id="file-input" accept=".pdf,.docx" multiple hidden>
+            </div>
+          </div>
+          <div class="tag-filter" id="tag-filter">
+            <label class="sel-all hidden" id="sel-all-wrap"><input type="checkbox" id="sel-all"> 全选</label>
+            <button class="chip active" data-tag="">全部</button>
+          </div>
+          <div id="material-list" class="material-list"></div>
+        </div>
+      </section>
+
+      <!-- 互动学习 -->
+      <section id="panel-study" class="tab-panel hidden">
+        <!-- 练习：出题 → 作答判分 → 错题重练（学习闭环的后半段） -->
+        <div class="panel">
+          <div class="panel-head">
+            <h3>练习</h3>
+            <div class="panel-tools">
+              <select id="quiz-num" class="input input-sm">
+                <option value="5">5 题</option><option value="10">10 题</option>
+                <option value="15">15 题</option><option value="20">20 题</option>
+              </select>
+              <select id="quiz-kind" class="input input-sm">
+                <option value="choice">仅选择题</option>
+                <option value="mixed">混合题型</option>
+                <option value="short">仅简答题</option>
+              </select>
+              <button id="btn-toggle-quiz-scope" class="btn btn-outline btn-sm">选择范围</button>
+              <button id="btn-quiz-wrong" class="btn btn-outline btn-sm">错题重练</button>
+              <button id="btn-quiz" class="btn btn-primary btn-sm">开始练习</button>
+            </div>
+          </div>
+          <div id="quiz-scope" class="quiz-scope hidden">
+            <div class="tag-filter" id="quiz-tag-filter">
+              <button class="chip active" data-tag="">全部</button>
+            </div>
+            <div id="quiz-material-list" class="quiz-material-list"></div>
+            <div class="quiz-scope-actions">
+              <button id="btn-quiz-all" class="btn btn-ghost btn-sm">全选</button>
+              <button id="btn-quiz-none" class="btn btn-ghost btn-sm">清空</button>
+              <span class="muted" id="quiz-scope-count"></span>
+            </div>
+          </div>
+          <div id="quiz-coverage" class="quiz-coverage hidden">
+            <div class="cov-row">
+              <span class="cov-label">知识点覆盖</span>
+              <span class="cov-track"><i id="cov-fill"></i></span>
+              <span class="cov-pct" id="cov-pct">0%</span>
+              <button id="btn-cov-detail" class="btn btn-ghost btn-sm">按资料明细</button>
+              <button id="btn-quiz-full" class="btn btn-primary btn-sm">全面覆盖</button>
+            </div>
+            <div class="cov-nums" id="cov-nums"></div>
+            <div id="cov-detail" class="cov-detail hidden"></div>
+            <div id="cov-progress" class="cov-progress hidden"></div>
+          </div>
+          <div id="quiz-bar" class="quiz-bar hidden"></div>
+          <div id="quiz-result" class="quiz-result"></div>
+        </div>
+        <!-- 聊天 -->
+        <div class="panel panel-chat">
+          <div id="chat-log" class="chat-log">
+            <div class="chat-hint">提问会<strong>只在当前课程的资料范围内</strong>检索回答，并标注出处页码。</div>
+          </div>
+          <div class="guide-bar">
+            <button id="btn-guide" class="btn btn-outline btn-sm">AI 导学：基于本课资料列重点、推荐先问的问题</button>
+            <label class="ext-switch" id="ext-switch" title="开启后：检索范围扩到全部课程，并允许 AI 在资料不足时用自有知识补充（回答里会明确标出哪些不是资料里的内容）">
+              <input type="checkbox" id="chat-allow-external">
+              <span>允许外部资料</span>
+            </label>
+          </div>
+          <form id="chat-form" class="chat-form">
+            <input id="chat-input" class="input" placeholder="输入你的问题，Enter 发送…" autocomplete="off">
+            <button type="submit" class="btn btn-primary" id="btn-send">发送</button>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <!-- 待办事项视图 -->
+    <div id="todo-view" class="course-view hidden">
+      <header class="course-header">
+        <div><h1>待办事项</h1>
+          <div class="course-sub">默认按 DDL 升序，最近要交的排在最上</div></div>
+        <div class="panel-tools">
+          <button id="todo-sort" class="btn btn-ghost">排序：按 DDL</button>
+          <button id="btn-back-todo" class="btn btn-ghost">← 返回</button>
+        </div>
+      </header>
+      <section class="panel">
+        <form id="todo-form" class="todo-form">
+          <input id="todo-input" class="input" placeholder="具体事项，如 CPT203 CW2 截止提交" autocomplete="off">
+          <select id="todo-course" class="input input-sm" title="属于哪门课（可选）"></select>
+          <input id="todo-due" type="datetime-local" class="input input-sm">
+          <button type="submit" class="btn btn-primary">添加</button>
+        </form>
+        <div id="todo-list" class="todo-list"></div>
+      </section>
+    </div>
+
+
+    <!-- 资料总库视图 -->
+    <div id="library-view" class="course-view hidden">
+      <header class="course-header">
+        <div><h1>资料总库</h1>
+          <div class="course-sub">全部课程（含未分类）的资料都在这里，标签、搜索、导出、删除与课程内一致</div></div>
+        <button id="btn-back-library" class="btn btn-ghost">← 返回</button>
+      </header>
+      <section class="panel">
+        <div class="panel-head">
+          <h3>全部资料</h3>
+          <div class="panel-tools">
+            <button id="btn-lib-del-selected" class="btn btn-danger btn-sm hidden">删除</button>
+            <button id="btn-lib-export" class="btn btn-outline btn-sm hidden" disabled>导出</button>
+            <button id="btn-lib-edit" class="btn btn-outline btn-sm">编辑</button>
+            <button id="btn-lib-ai-organize" class="btn btn-ghost btn-sm hidden">AI 整理</button>
+            <input id="lib-search" class="input input-sm" placeholder="搜索资料名…">
+          </div>
+        </div>
+        <div class="tag-filter" id="lib-tag-filter">
+          <label class="sel-all hidden" id="lib-sel-all-wrap"><input type="checkbox" id="lib-sel-all"> 全选</label>
+          <button class="chip active" data-tag="">全部</button>
+        </div>
+        <div id="library-list" class="material-list"></div>
+      </section>
+    </div>
+
+    <!-- 成绩计算视图 -->
+    <div id="grade-view" class="course-view hidden">
+      <header class="course-header">
+        <div><h1>均分计算</h1>
+          <div class="course-sub">HandBook 上传后 AI 扫描考核构成作预填，学分、权重、小分均可手工修改；专业课按学分加权</div></div>
+        <button id="btn-back-grade" class="btn btn-ghost">← 返回</button>
+      </header>
+      <section class="panel">
+        <div class="grade-overall">
+          <span>加权均分（专业课，按学分）</span>
+          <strong id="overall-score">-</strong>
+          <span id="overall-note" class="muted"></span>
+        </div>
+      </section>
+      <div id="grade-list"></div>
+    </div>
+
+    <!-- 回收区视图 -->
+    <div id="recycle-view" class="course-view hidden">
+      <header class="course-header">
+        <div><h1>回收区</h1><div class="course-sub">已删除的资料，可恢复或彻底清除</div></div>
+        <button id="btn-back-recycle" class="btn btn-ghost">← 返回</button>
+      </header>
+      <section class="panel">
+        <div class="panel-head">
+          <h3>已删除资料</h3>
+          <div class="panel-tools">
+            <label class="sel-all"><input type="checkbox" id="recycle-sel-all"> 全选</label>
+            <button id="btn-recycle-del" class="btn btn-danger btn-sm hidden">删除</button>
+            <button id="btn-recycle-restore" class="btn btn-primary btn-sm hidden">恢复</button>
+          </div>
+        </div>
+        <div id="recycle-list" class="material-list"></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- 新建/编辑课程弹窗 -->
+<div id="modal-course" class="modal hidden">
+  <div class="modal-card">
+    <h3 id="modal-course-title">新建课程</h3>
+    <label class="field"><span>课程代码 *</span><input id="course-code" class="input" placeholder="如 CPT203"></label>
+    <label class="field"><span>课程名称</span><input id="course-name" class="input" placeholder="如 数据库原理"></label>
+    <label class="field"><span>分组 *</span>
+      <select id="course-group" class="input">
+        <option value="major">专业课</option>
+        <option value="easy">水课</option>
+        <option value="elective">额外选修课</option>
+      </select>
+    </label>
+    <label class="field" id="field-credits"><span>学分（决定均分权重）</span>
+      <input id="course-credits" type="number" class="input" min="0" step="2.5" placeholder="如 10">
+    </label>
+    <label class="field" id="field-semester"><span>学期（专业课按学期记录）</span>
+      <select id="course-semester" class="input">
+        <option value="">不指定</option>
+        <option>Year 2 S1</option><option>Year 2 S2</option>
+        <option>Year 3 S1</option><option>Year 3 S2</option>
+        <option>Year 4 S1</option><option>Year 4 S2</option>
+      </select>
+    </label>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close>取消</button>
+      <button class="btn btn-primary" id="btn-save-course">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 移动资料弹窗 -->
+<div id="modal-move" class="modal hidden">
+  <div class="modal-card">
+    <h3>移动资料到课程</h3>
+    <div id="move-file-name" class="muted" style="margin-bottom:10px"></div>
+    <div id="move-course-list" class="move-course-list"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close>取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 设置弹窗 -->
+<div id="modal-settings" class="modal hidden">
+  <div class="modal-card">
+    <h3>设置</h3>
+    <label class="field"><span>DeepSeek API Key</span>
+      <input id="set-key" type="password" class="input" placeholder="sk-…">
+      <small id="set-key-state" class="muted"></small>
+    </label>
+    <label class="field"><span>相关度阈值（越低越宽松）</span>
+      <input id="set-threshold" type="number" step="0.01" min="0" max="1" class="input">
+    </label>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close>取消</button>
+      <button class="btn btn-primary" id="btn-save-settings">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- PDF 阅读器（全屏覆盖层） -->
+<div id="pdf-viewer" class="pdf-viewer hidden">
+  <div class="pv-toolbar">
+    <span id="pv-title" class="pv-title"></span>
+    <div class="pv-controls">
+      <button class="btn btn-ghost btn-sm" id="pv-prev">‹</button>
+      <input id="pv-page-input" class="input input-sm pv-page-input" type="number" min="1" value="1">
+      <span class="pv-total muted">/ <span id="pv-total">-</span></span>
+      <button class="btn btn-ghost btn-sm" id="pv-next">›</button>
+      <button class="btn btn-ghost btn-sm" id="pv-zoom-out">－</button>
+      <button class="btn btn-ghost btn-sm" id="pv-zoom-in">＋</button>
+      <button class="btn btn-ghost btn-sm" id="pv-fit">适应宽度</button>
+      <span class="pv-sep"></span>
+      <button class="btn btn-ghost btn-sm" id="pv-toc-toggle">收起目录</button>
+      <button class="btn btn-ghost btn-sm" id="pv-note-toggle">收起笔记</button>
+      <span class="pv-sep"></span>
+      <button class="btn btn-ghost btn-sm" id="pv-close">关闭</button>
+    </div>
+  </div>
+  <div class="pv-body">
+    <aside id="pv-toc-col" class="pv-toc-col">
+      <div class="pv-note-head">
+        <span>目录</span>
+        <button id="pv-toc-hide" class="imm-col-btn" title="收起目录栏">‹</button>
+      </div>
+      <div id="pv-toc-list" class="toc-list"></div>
+    </aside>
+    <div class="pv-main">
+      <div class="ink-bar" id="pv-ink-bar">
+        <button class="ink-tool" data-tool="pointer">选择</button>
+        <button class="ink-tool active" data-tool="pen">圆珠笔</button>
+        <button class="ink-tool" data-tool="highlight">荧光笔</button>
+        <button class="ink-tool" data-tool="text">文本框</button>
+        <button class="ink-tool" data-tool="eraser">橡皮擦</button>
+        <span class="ink-sep"></span>
+        <span class="ink-colors"></span>
+        <span class="ink-sep"></span>
+        <button class="ink-act" data-act="undo">撤销</button>
+        <button class="ink-act" data-act="clear">清空本页</button>
+        <button class="ink-act hidden" data-act="copysel">复制选中</button>
+        <span class="ink-status muted" id="pv-ink-status"></span>
+      </div>
+      <div id="pv-scroll" class="pv-scroll">
+        <div class="ink-stage" id="pv-ink-stage">
+          <canvas id="pv-canvas" class="pv-canvas"></canvas>
+          <div class="text-layer"></div>
+          <canvas class="ink-canvas"></canvas>
+        </div>
+        <div id="pv-html" class="pv-html hidden"></div>
+        <div id="pv-loading" class="pv-loading muted">加载中…</div>
+      </div>
+    </div>
+    <aside id="pv-note" class="pv-note">
+      <div class="pv-note-head">
+        <span>我的笔记</span>
+        <span id="pv-note-status" class="muted"></span>
+        <button id="pv-note-hide" class="imm-col-btn" title="收起笔记栏">›</button>
+      </div>
+      <div class="note-tools">
+        <button class="nb-btn" data-kind="title">标题</button>
+        <button class="nb-btn active" data-kind="body">正文</button>
+        <span class="muted note-hint">光标停在哪行就切哪行</span>
+      </div>
+      <div id="pv-note-edit" class="note-editor" contenteditable="true" spellcheck="false"></div>
+    </aside>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script src="vendor/pdf.min.js"></script>
+  <!-- 沉浸模式（上课专用） -->
+  <div id="immersive" class="immersive hidden">
+    <div class="imm-top">
+      <span id="imm-title" class="pv-title"></span>
+      <span id="imm-progress" class="muted" style="font-size:12px"></span>
+      <button id="imm-toggle-toc" class="btn btn-ghost btn-sm" title="显示 / 隐藏左侧目录栏">目录</button>
+      <button id="imm-toggle-notes" class="btn btn-ghost btn-sm" title="显示 / 隐藏右侧注释与笔记">注释</button>
+      <span class="pv-controls">
+        <button id="imm-prev" class="btn btn-ghost btn-sm">‹</button>
+        <input id="imm-page-input" class="input pv-page-input" value="1">
+        <span id="imm-total" class="muted" style="font-size:12px"></span>
+        <button id="imm-next" class="btn btn-ghost btn-sm">›</button>
+        <button id="imm-zoom-out" class="btn btn-ghost btn-sm" title="缩小（也可用触控板捏合）">－</button>
+        <button id="imm-zoom-in" class="btn btn-ghost btn-sm" title="放大（也可用触控板捏合）">＋</button>
+        <button id="imm-fit" class="btn btn-ghost btn-sm" title="适应窗口宽度">适应宽度</button>
+        <button id="imm-close" class="btn btn-ghost btn-sm">关闭</button>
+      </span>
+    </div>
+    <div class="imm-body">
+      <aside class="imm-toc" id="imm-toc-col">
+        <div class="imm-toc-head">
+          <span>目录</span>
+          <button id="imm-toc-hide" class="imm-col-btn" title="收起目录栏">‹</button>
+        </div>
+        <div id="imm-toc-list" class="toc-list"></div>
+      </aside>
+      <div class="imm-left">
+        <div class="ink-bar" id="imm-ink-bar">
+          <button class="ink-tool" data-tool="pointer">选择</button>
+          <button class="ink-tool active" data-tool="pen">圆珠笔</button>
+          <button class="ink-tool" data-tool="highlight">荧光笔</button>
+          <button class="ink-tool" data-tool="text">文本框</button>
+          <button class="ink-tool" data-tool="eraser">橡皮擦</button>
+          <span class="ink-sep"></span>
+          <span class="ink-colors"></span>
+          <span class="ink-sep"></span>
+          <button class="ink-act" data-act="undo">撤销</button>
+          <button class="ink-act" data-act="clear">清空本页</button>
+          <button class="ink-act hidden" data-act="copysel">复制选中</button>
+          <span class="ink-status muted" id="imm-ink-status"></span>
+        </div>
+        <div class="ink-stage" id="imm-ink-stage">
+          <canvas id="imm-canvas" class="pv-canvas"></canvas>
+          <div class="text-layer"></div>
+          <canvas class="ink-canvas"></canvas>
+        </div>
+      </div>
+      <div class="imm-right" id="imm-right-col">
+        <div class="imm-tabs">
+          <button id="imm-tab-ai" class="imm-tab active">本页注释</button>
+          <button id="imm-tab-mine" class="imm-tab">我的笔记</button>
+          <button id="imm-notes-hide" class="imm-col-btn" title="收起右侧栏">›</button>
+        </div>
+
+        <div id="imm-pane-ai" class="imm-pane">
+          <div class="imm-note-head">
+            <span>本页注释</span>
+            <span class="imm-note-btns">
+              <select id="imm-note-lang" class="input input-sm" title="注释语言（各语言分别生成、互不覆盖）">
+                <option value="zh">中文</option>
+                <option value="en">English</option>
+                <option value="es">Español</option>
+              </select>
+              <button id="imm-note-gen" class="btn btn-outline btn-sm">生成注释</button>
+              <button id="imm-note-gen-all" class="btn btn-ghost btn-sm" title="为当前语言的整份课件补齐注释（会消耗较多 API 额度）">全部</button>
+              <button id="imm-note-edit" class="btn btn-outline btn-sm hidden">编辑注释</button>
+            </span>
+          </div>
+          <div id="imm-note" class="imm-note"><span class="muted">加载中…</span></div>
+          <div id="imm-note-edit-wrap" class="hidden">
+            <textarea id="imm-note-textarea" class="input" rows="14"></textarea>
+            <div class="imm-note-actions">
+              <button id="imm-note-cancel" class="btn btn-ghost btn-sm">取消</button>
+              <button id="imm-note-save" class="btn btn-primary btn-sm">保存注释</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="imm-pane-mine" class="imm-pane hidden">
+          <div class="imm-note-head">
+            <span>我的笔记</span>
+            <span id="imm-note-status" class="muted"></span>
+          </div>
+          <div class="note-tools">
+            <button class="nb-btn" data-kind="title">标题</button>
+            <button class="nb-btn active" data-kind="body">正文</button>
+            <span class="muted note-hint">光标停在哪行就切哪行</span>
+          </div>
+          <div id="imm-note-body" class="note-editor" contenteditable="true" spellcheck="false"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // 页面加载 3 秒后若前端未就绪（后端中途断过），自动重载一次
+  window.addEventListener("load", () => {
+    setTimeout(() => {
+      if (!window.__appReady && !sessionStorage.getItem("sls-reloaded")) {
+        sessionStorage.setItem("sls-reloaded", "1");
+        location.reload();
+      }
+    }, 3000);
+  });
+</script>
+<script src="core.js?v=20261021e"></script>
+  <script src="views-home.js?v=20261021e"></script>
+  <script src="views-course.js?v=20261021e"></script>
+  <script src="views-quiz.js?v=20261021e"></script>
+  <script src="views-tools.js?v=20261021e"></script>
+  <script src="main.js?v=20261021e"></script>
+</body>
+</html>

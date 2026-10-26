@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pymupdf
+fastembed
+numpy
+openai
+httpx
+python-dotenv
+pywebview
