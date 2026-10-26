@@ -173,6 +173,107 @@ python launcher.py      # macOS / Linux 桌面窗口
 start.bat               # Windows 浏览器模式
 ```
 
+## 附：本机三系统安装与新手教程（2026-10-26）
+
+> 这一节不是本项目功能的一部分，而是维护者本机真实在跑的三个 AI 系统的**安装 + 新手笔记**：**OpenClaw**（agent 网关）、**DeepSeek Harness**（本地编码 agent）、**本应用**（Self-Learning Space）。统一按「是什么 → 安装 → 首次运行 → 新手怎么用 → 踩过的坑」记录，换电脑时可照着复现。
+
+### 1️⃣ OpenClaw — AI agent 网关 + Control UI
+
+**是什么**：本地常驻的 agent 网关。CLI、浏览器 Control UI、多渠道（webchat / 微信 / QQ 等）都接在它上面，所有对话与记忆落在 `~/.openclaw/`。
+
+**安装要求**：Node **24.22.1+**（推荐 26.12.1+）；macOS / Linux / WSL2 / Windows 均可。
+
+```bash
+# macOS / Linux / WSL2
+curl -fsSL https://openclaw.ai/install.sh | bash
+```
+
+```powershell
+# Windows (PowerShell)
+iwr -useb https://openclaw.ai/install.ps1 | iex
+```
+
+> 也可以直接装桌面版（Windows Hub / macOS 菜单栏 app），首次启动即可建本地 Gateway。
+
+**首次运行**：安装器自动跑 onboarding（选模型、填 API Key）→ `openclaw status` 确认网关活着。
+
+**新手怎么用**
+
+- `openclaw status` 看健康 · `openclaw models list` 看可用模型 · `openclaw doctor` 排障
+- 浏览器打开 Control UI 直接聊天；多设备可加 node
+- 改配置：`openclaw config set <字段路径> '<json>' --strict-json`（先加 `--dry-run` 预演）
+- 扩展：skills、MCP 服务（`openclaw mcp set / probe`）、定时 automations
+
+**踩过的坑**
+
+- WSL **mirrored 网络**模式下端口会和 Windows 进程冲突（微信常占一批）→ 选注册段空闲端口
+- `openclaw agent --model ...` 在 agent 回合内会被拒（丢失会话归属）→ 验证模型请用 `openclaw infer model run --model <provider>/<model>`
+- 不要用 shell 重启网关，用聊天里的 `/restart` 或专用工具
+
+### 2️⃣ DeepSeek Harness（dsh）— 本地终端编码 agent
+
+**是什么**：DeepSeek 官方终端编码 agent，自带 Web UI，可选工作目录、直接用自然语言下任务。
+
+**安装要求**：Node + npm。
+
+```bash
+npm i -g @deepseek-ai/dsh@<版本> --registry=https://registry.npmmirror.com
+```
+
+> ⚡ 走 npmmirror 镜像明显更快；**查最新版别只看 npm `latest`**——新版常在 GitHub Releases / npm `next` tag。
+
+**首次运行 / 每次启动**
+
+```bash
+bash ~/.local/bin/start-dsh.sh    # 打印带 token 的访问地址
+```
+
+Windows 端可双击 `.bat` 启动器（内部调 WSL 脚本再打开默认浏览器）。
+
+**新手怎么用**：打开带 token 的 URL → 选工作目录 → 直接用自然语言说任务；**升级后先结束旧进程再启动**，否则跑的还是老版本。
+
+**踩过的坑**
+
+- 换端口要改两处：脚本里的 `PORT` **以及** 启动参数 `--port "$PORT"`（只改变量无效）
+- 别 `pkill -f dsh`（会匹配到执行它的 shell 自己）→ 先 `ps -eo pid,cmd | grep` 找 PID 再 kill
+
+### 3️⃣ 本应用（Self-Learning Space）— 本地课程 RAG 工作台
+
+**是什么**：把 PDF/DOCX 课件按课程入库，基于自己的资料做**带出处页码**的问答；另有 AI 逐页注释、PDF 圈画批注、练习闭环、知识点覆盖率台账。数据全在本机，仅调大模型时联网。
+
+**安装要求**：Python 3.10+；首次启动需下载约 250MB 本地向量模型（fastembed ONNX），之后离线可用。
+
+```bash
+git clone git@github.com:QuuuuuuuuuX/Self-study_AI_Assistant.git
+cd Self-study_AI_Assistant
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env          # 填 DEEPSEEK_API_KEY（也可启动后在「设置」里填）
+```
+
+**首次运行**
+
+```bash
+bash start.sh        # 浏览器模式 → http://127.0.0.1:8765
+# 或
+python launcher.py   # 桌面窗口（pywebview）
+```
+
+**新手怎么用**
+
+1. **建课程**：课程代码（如 ADS106TC）+ 名称
+2. **传资料**：单份直接上传；整门课批量先 `.venv/bin/python import_courses.py --dry-run` 看清单，去掉 `--dry-run` 再真导
+3. **问答**：用中文问英文课件，答案带 `[n]` 出处，点一下跳到原文那一页
+4. **练习**：选择题点选即判分，答错可「让 AI 讲讲这个知识点」，带着题干跳回问答
+
+**踩过的坑**
+
+- 只收 **PDF / DOCX**，`.md` 不收；自有笔记要入库需先转 docx，建议单独打「笔记」标签，别与原始讲义混在一起
+- 数据在 `data/study.db`（courses / materials / chunks 含 embedding）+ `data/files/`；核对是否真入库：
+  `select count(*), sum(embedding is not null) from chunks where material_id='<id>'`
+- 首次启动下载向量模型需要等待，不要误判为卡死
+- 默认端口 **8765**，与其它本地服务共存时注意避开占用
+
 ## License
 
 MIT
