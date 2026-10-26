@@ -8,3 +8,4 @@ openai
 httpx
 python-dotenv
 pywebview
+python-docx

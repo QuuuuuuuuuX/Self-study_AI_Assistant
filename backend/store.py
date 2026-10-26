@@ -39,9 +39,12 @@ def fix_zip_name(name: str) -> str:
 
 
 def _conn():
-    conn = sqlite3.connect(DB_PATH)
+    # timeout + busy_timeout: bulk imports run many ingestion threads at once, and
+    # the default 5 s wait surfaces as "database is locked" (seen on a 81-file import).
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=30000")
     return conn
 
 

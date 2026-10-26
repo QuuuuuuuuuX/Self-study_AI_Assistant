@@ -8,6 +8,7 @@ os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
 
 import json
 import re
+import queue
 import threading
 from typing import Iterator
 
@@ -220,8 +221,26 @@ def process_material(material_id: str):
         analyze_material(material_id)
 
 
+# One ingestion worker instead of a thread per file: 81 parallel uploads both thrash
+# CPU on embedding and collide on SQLite writes. Serialising keeps imports predictable.
+_INGEST_Q: "queue.Queue[str]" = queue.Queue()
+
+
+def _ingest_worker():
+    while True:
+        material_id = _INGEST_Q.get()
+        try:
+            process_material(material_id)
+        finally:
+            _INGEST_Q.task_done()
+
+
+_ingest_thread = threading.Thread(target=_ingest_worker, daemon=True, name="ingest-worker")
+_ingest_thread.start()
+
+
 def process_material_async(material_id: str):
-    threading.Thread(target=process_material, args=(material_id,), daemon=True).start()
+    _INGEST_Q.put(material_id)
 
 
 # ---------- 入库 AI 分析（每份资料只跑一次） ----------
