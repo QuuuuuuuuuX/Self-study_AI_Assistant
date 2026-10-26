@@ -179,7 +179,12 @@ def api_note_generate_one(mid: str, page: int, lang: str = "zh"):
     if not note:
         raise HTTPException(502, "模型没有返回这一页的内容，可稍后重试")
     store.upsert_note(mid, page, note, edited=0, lang=lang)
-    return {"ok": True, "page": page, "note": note, "lang": lang}
+    # 与 GET /notes 的行结构保持一致（{page, content, edited}）。
+    # 以前这里回裸字符串，前端拿 r.note 当对象用（n.content），结果生成完显示不出来，
+    # 必须刷新一次浏览器重新拉 GET 才正常。
+    return {"ok": True, "page": page,
+            "note": {"page": page, "content": note, "edited": 0},
+            "lang": lang}
 
 
 @router.get("/api/materials/{mid}/notes")

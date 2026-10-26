@@ -916,6 +916,9 @@ function pollNotesUntilDone(mid) {
   _notePollTimer = setInterval(async () => {
     try {
       const st = await api(`/api/materials/${mid}/notes`);
+      // 列表是缓存数据，只重绘不会更新徽标 —— 先把本次的注释页数写回去
+      const row = materialState.list.find(x => x.id === mid);
+      if (row) row.notes_count = (st.notes || []).length;
       renderMaterials();
       if (!st.status || !st.status.running) {
         clearInterval(_notePollTimer);

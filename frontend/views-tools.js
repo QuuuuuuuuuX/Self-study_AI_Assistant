@@ -466,7 +466,12 @@ $("#imm-note-gen").onclick = guard("生成本页注释", async () => {
   toast(`正在生成第 ${page} 页的${langLabel}注释…`);
   try {
     const r = await api(`/api/materials/${imm.mid}/notes/${page}/generate?lang=${imm.lang}`, { method: "POST" });
-    imm.notes[page] = r.note;
+    // 服务端回 {page, content, edited}；旧版回裸字符串，两种都接住，
+    // 否则新生成的注释要刷新页面才显示
+    imm.notes[page] = typeof r.note === "string"
+      ? { page, content: r.note, edited: 0 }
+      : (r.note || { page, content: "", edited: 0 });
+    bumpNoteCount(imm.mid, Object.keys(imm.notes).length);
     renderImmNote();
     toast(`第 ${page} 页${langLabel}注释已生成`);
   } catch (e) {
@@ -526,6 +531,16 @@ onGlobalKey(({ key, typing }) => {
   if (key === "ArrowRight" || key === "PageDown") { immGo(imm.page + 1); return true; }
   return false;
 });
+
+// 注释页数变了就把列表徽标同步一份：列表数据是缓存的，不写回 notes_count
+// 光重绘看不到「已注释 N 页」，得刷新整页才会变
+function bumpNoteCount(mid, count) {
+  if (typeof count !== "number") return;
+  const m = (materialState.list || []).find(x => x.id === mid);
+  if (!m || (m.notes_count || 0) === count) return;
+  m.notes_count = count;
+  renderMaterials();
+}
 
 async function refreshImmNotes() {
   try {
