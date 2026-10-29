@@ -1,5 +1,7 @@
 # Self-Learning Space · Local-first AI Study Assistant
 
+[![XERJ Corpus Hub contributor](https://hub.xerj.org/contributors/QuuuuuuuuuX/badge.svg)](https://hub.xerj.org/contributors/QuuuuuuuuuX)
+
 [中文](README.md) | **English**
 
 A fully **local-first** study workspace: organize your PDF/Word course materials by course, then ask questions answered **strictly from your own materials** — with page-level citations, and an explicit "not found" instead of a guess. Also includes in-reader annotation, per-page AI notes, and quiz generation.
@@ -150,6 +152,14 @@ launcher.py      pywebview desktop shell
 | macOS | ✓ primary development platform |
 | Windows | ✓ `start.bat` for browser mode; desktop mode needs WebView2 (preinstalled on Win11) |
 | Linux | ✓ requires `webkit2gtk` for desktop mode |
+
+## Corpus Hub inclusion
+
+Commit `1072c514` of this repository (2026-10-26, "Fix parallel-ingestion SQLite lock, add missing python-docx, bulk import tools") was selected for the [XERJ Corpus Hub](https://hub.xerj.org/contributors/QuuuuuuuuuX) — a public library of open-source implementations that AI coding agents retrieve from before writing code.
+
+- Scope: 4 files / 198 lines of that commit, distributed under MIT with attribution and the repository link kept intact
+- Pinned to that single commit; later commits are not synced automatically
+- This repository is a derivative of [Terrence20070515/Self-study_AI_Assistant](https://github.com/Terrence20070515/Self-study_AI_Assistant) (MIT); original authorship is recorded in [ATTRIBUTION.md](ATTRIBUTION.md)
 
 ## License
 

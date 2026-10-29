@@ -3,6 +3,8 @@
 
 # Self-Learning Space · 本地 AI 学习助手
 
+[![XERJ Corpus Hub contributor](https://hub.xerj.org/contributors/QuuuuuuuuuX/badge.svg)](https://hub.xerj.org/contributors/QuuuuuuuuuX)
+
 **中文** | [English](README.en.md)
 
 一个**完全本地运行**的课程学习工作台：把 PDF/Word 课件按课程整理入库，基于自己的资料做**精准问答**（RAG，标注出处页码，检索不到就明说，不编造），并在阅读器里做圈画、批注、AI 逐页注释。
@@ -273,6 +275,14 @@ python launcher.py   # 桌面窗口（pywebview）
   `select count(*), sum(embedding is not null) from chunks where material_id='<id>'`
 - 首次启动下载向量模型需要等待，不要误判为卡死
 - 默认端口 **8765**，与其它本地服务共存时注意避开占用
+
+## 收录说明
+
+本仓库的 `1072c514` 提交（2026-10-26，「Fix parallel-ingestion SQLite lock, add missing python-docx, bulk import tools」）入选了 [XERJ Corpus Hub](https://hub.xerj.org/contributors/QuuuuuuuuuX) —— 一个把开源实现作为参考语料、供 AI 编程助手在动手写代码前检索的公共库。
+
+- 收录范围：该 commit 的 4 个文件 / 198 行，按 MIT 许可分发，署名与仓库链接随语料保留
+- 只钉在这个 commit 上，后续提交不会被自动同步
+- 本仓库是 [Terrence20070515/Self-study_AI_Assistant](https://github.com/Terrence20070515/Self-study_AI_Assistant) 的衍生版（MIT），原作者署名见 [ATTRIBUTION.md](ATTRIBUTION.md)
 
 ## License
 
