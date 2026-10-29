@@ -3,7 +3,11 @@
 
 # Self-Learning Space · 本地 AI 学习助手
 
-[![XERJ Corpus Hub contributor](https://hub.xerj.org/contributors/QuuuuuuuuuX/badge.svg)](https://hub.xerj.org/contributors/QuuuuuuuuuX)
+<p align="center">
+  <a href="https://hub.xerj.org/contributors/QuuuuuuuuuX">
+    <img src="https://img.shields.io/badge/XERJ_Corpus_Hub-contributor-7c3aed?style=for-the-badge" alt="XERJ Corpus Hub contributor" height="36">
+  </a>
+</p>
 
 **中文** | [English](README.en.md)
 
